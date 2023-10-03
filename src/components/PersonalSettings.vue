@@ -162,9 +162,17 @@
 				<div v-if="showDrive"
 					id="google-drive">
 					<h3>{{ t('integration_google', 'Drive') }}</h3>
+
 					<NcCheckboxRadioSwitch v-if="!importingDrive"
 						:checked="!state.consider_shared_files"
 						@update:checked="onDriveConsiderSharedChange">
+						{{ t('integration_google', 'Ignore shared files') }}
+					</NcCheckboxRadioSwitch>
+					<div v-if="!importingDrive" class="line">
+
+					<NcCheckboxRadioSwitch v-if="!importingDrive"
+						:checked="!state.consider-shared-drives"
+						@update:checked="onDriveConsiderSharedDrivesChange">
 						{{ t('integration_google', 'Ignore shared files') }}
 					</NcCheckboxRadioSwitch>
 					<div v-if="!importingDrive" class="line">
@@ -201,11 +209,13 @@
 						<br><br>
 					</div>
 					<div class="line">
-						<label v-if="state.consider_shared_files && sharedWithMeSize > 0">
+						<label v-if="state.consider_shared_drives ||  (state.consider_shared_files && sharedWithMeSize > 0)">
 							<FileIcon />
 							{{ t('integration_google',
-								'Your Google Drive ({formSize} + {formSharedSize} shared with you)',
-								{ formSize: myHumanFileSize(driveSize, true), formSharedSize: myHumanFileSize(sharedWithMeSize, true) }
+								'{nbFiles} file in Google Drive ({formSize} + {formSharedSize} shared with you)',
+								'{nbFiles} files in Google Drive ({formSize} + {formSharedSize} shared with you)', nbFiles,
+								{ nbFiles, formSize: myHumanFileSize(driveSize, true), formSharedSize: myHumanFileSize(sharedWithMeSize, true) }
+
 							)
 							}}
 						</label>
@@ -813,6 +823,10 @@ export default {
 		},
 		myHumanFileSize(bytes, approx = false, si = false, dp = 1) {
 			return humanFileSize(bytes, approx, si, dp)
+		},
+		onDriveConsiderSharedDrivesChange(e) {
+			this.state.consider_shared_drives = !e.target.checked
+			this.saveOptions({ consider_shared_drives: this.state.consider_shared_drives ? '1' : '0' }, this.getGoogleDriveInfo)
 		},
 		onDriveConsiderSharedChange(newValue) {
 			this.state.consider_shared_files = !newValue

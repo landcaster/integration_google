@@ -65,6 +65,7 @@ class GoogleDriveAPIService {
 	 */
 	public function getDriveSize(string $userId): array {
 		$considerSharedFiles = $this->config->getUserValue($userId, Application::APP_ID, 'consider_shared_files', '0') === '1';
+		$considerSharedDrives = $this->config->getUserValue($userId, Application::APP_ID, 'consider_shared_drives', '0') === '1';
 		$params = [
 			'fields' => '*',
 		];
@@ -86,6 +87,14 @@ class GoogleDriveAPIService {
 			'pageSize' => 1000,
 			'q' => "mimeType!='application/vnd.google-apps.folder' and sharedWithMe = true",
 		];
+		if ($considerSharedDrives) {
+			$params['corpora'] = 'allDrives';
+			$params['includeItemsFromAllDrives'] = 'true';
+			$params['supportsAllDrives'] = 'true';
+		}
+		if ($considerSharedFiles) {
+			$params['fields'] = 'files/name,files/ownedByMe,files/size';
+		}
 		do {
 			$result = $this->googleApiService->request($userId, 'drive/v3/files', $params);
 			if (isset($result['error']) || !isset($result['files'])) {
@@ -231,6 +240,7 @@ class GoogleDriveAPIService {
 		array &$directoryProgress = []
 	): array {
 		$considerSharedFiles = $this->config->getUserValue($userId, Application::APP_ID, 'consider_shared_files', '0') === '1';
+		$considerSharedDrives = $this->config->getUserValue($userId, Application::APP_ID, 'consider_shared_drives', '0') === '1';
 		// create root folder
 		$userFolder = $this->root->getUserFolder($userId);
 		if (!$userFolder->nodeExists($targetPath)) {
@@ -249,6 +259,11 @@ class GoogleDriveAPIService {
 			'fields' => '*',
 			'q' => "mimeType='application/vnd.google-apps.folder'",
 		];
+		if ($considerSharedDrives) {
+			$params['corpora'] = 'allDrives';
+			$params['includeItemsFromAllDrives'] = 'true';
+			$params['supportsAllDrives'] = 'true';
+		}
 		do {
 			$result = $this->googleApiService->request($userId, 'drive/v3/files', $params);
 			if (isset($result['error'])) {
